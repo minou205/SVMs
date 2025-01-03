@@ -20,6 +20,27 @@ int count_word(const char *mail){
     return x;
 }
 
+void prepare_data(struct svm_node *nodes,int x,int l){
+    nodes[0].index=1;//num of the special words
+    nodes[0].value=x;
+
+    nodes[1].index=2;//mail length
+    nodes[1].value=l;
+
+    nodes[2].index=-1;
+}
+
+
+void read_file(const char *fname,char *content){
+    FILE *f=fopen(fname,"r");
+    if (!f){
+        printf("ERROR of reading %s\n",fname);
+        exit(1);
+    }
+    fgets(content,maxL,f);
+    fclose(f);
+}
+
 int main() {
 
 const char *train_files[Nt]={"spam1.txt","spam2.txt","mail1.txt","mail2.txt"};
@@ -54,4 +75,31 @@ param.C=1.0;
 param.cache_size=100;
 param.eps=1e-3;
 param.shrinking=1;
+
+struct svm_model *model=svm_train(&prob,&param);
+
+char test_file[]="new_mail.txt";
+read_file(test_file,content);
+
+keyword_count=count_word(content);
+l=strlen(content);
+
+struct svm_node test_node[3];
+prepare_data(test_node,keyword_count,l);
+
+double result=svm_predict(model,test_node);
+
+
+if (result==1){
+    printf("Spam");
+}else{
+    printf("Not Spam");
+}
+
+svm_free_and_destroy_model(&model);
+free(prob.y);
+free(prob.x);
+free(x_space);
+
+return 0;
 }
